@@ -1,0 +1,23 @@
+name: sol
+description: Slice of Life - a gamified task app MVP.
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  shared_preferences: ^2.2.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/characters/
+  fonts:
+    - family: Silkscreen
+      fonts:
+        - asset: assets/fonts/Silkscreen-Regular.ttf
+        - asset: assets/fonts/Silkscreen-Bold.ttf
+          weight: 700
