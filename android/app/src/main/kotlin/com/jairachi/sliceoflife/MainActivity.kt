@@ -1,4 +1,4 @@
-package com.example.sol
+package com.jairachi.sliceoflife
 
 import io.flutter.embedding.android.FlutterActivity
 
