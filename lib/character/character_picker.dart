@@ -91,7 +91,7 @@ class _CharacterPickerState extends State<CharacterPicker> {
                                   padding: const EdgeInsets.fromLTRB(
                                       slant + 10, 20, slant + 10, 6),
                                   child: Row(children: [
-                                    _ArrowBtn(
+                                    ArrowBtn(
                                         icon: Icons.chevron_left,
                                         onTap: () => _move(-1)),
                                     Expanded(
@@ -129,7 +129,7 @@ class _CharacterPickerState extends State<CharacterPicker> {
                                         ),
                                       ),
                                     ),
-                                    _ArrowBtn(
+                                    ArrowBtn(
                                         icon: Icons.chevron_right,
                                         onTap: () => _move(1)),
                                   ]),
@@ -176,39 +176,4 @@ class _CharacterPickerState extends State<CharacterPicker> {
       ),
     );
   }
-}
-
-/// Round arrow button with an offset shadow (same look as the menu buttons).
-class _ArrowBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _ArrowBtn({required this.icon, required this.onTap});
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: onTap,
-        child: SizedBox(
-          width: 50,
-          height: 50,
-          child: Stack(children: [
-            Positioned(
-                left: 4,
-                top: 4,
-                child: Container(
-                    width: 46,
-                    height: 46,
-                    decoration: const BoxDecoration(
-                        color: cocoa, shape: BoxShape.circle))),
-            Container(
-              width: 46,
-              height: 46,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                  color: coral,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: cocoa, width: 2)),
-              child: Icon(icon, color: cream, size: 30),
-            ),
-          ]),
-        ),
-      );
 }
