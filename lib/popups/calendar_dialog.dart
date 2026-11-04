@@ -3,6 +3,7 @@ import '../core/palette.dart';
 import '../core/shapes.dart';
 import '../models/history.dart';
 import '../models/task.dart';
+import '../widgets/calendar_parts.dart';
 import '../widgets/slant_widgets.dart';
 
 const _monthNames = [
@@ -122,11 +123,7 @@ class _CalendarDialogState extends State<CalendarDialog> {
         child: Stack(alignment: Alignment.center, children: [
           // coral triangle marks today (nod to the pink triangle in the Persona calendar)
           if (isToday)
-            const Positioned(
-                left: 3,
-                bottom: 3,
-                child: CustomPaint(
-                    size: Size(15, 15), painter: _TrianglePainter())),
+            const Positioned(left: 3, bottom: 3, child: TodayTriangle()),
           Container(
             width: 40,
             height: 40,
@@ -310,30 +307,8 @@ class _CalendarDialogState extends State<CalendarDialog> {
                       Flexible(
                         child: SingleChildScrollView(
                           child: Stack(clipBehavior: Clip.hardEdge, children: [
-                            // big orange circle + ring behind the calendar, like the circle in the Persona screen
-                            Positioned(
-                              left: -90,
-                              top: -70,
-                              child: Container(
-                                  width: 520,
-                                  height: 520,
-                                  decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: lightOrange.withOpacity(0.32))),
-                            ),
-                            Positioned(
-                              left: -120,
-                              top: -100,
-                              child: Container(
-                                width: 580,
-                                height: 580,
-                                decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                        color: lightOrange.withOpacity(0.55),
-                                        width: 6)),
-                              ),
-                            ),
+                            // solid orange circle + ring behind the calendar, like the Persona calendar screen
+                            const Positioned.fill(child: CalendarBackdrop()),
                             Padding(
                               padding: const EdgeInsets.fromLTRB(
                                   slant + 8, 14, slant + 8, 16),
@@ -471,18 +446,4 @@ class _CalendarDialogState extends State<CalendarDialog> {
       ),
     );
   }
-}
-
-class _TrianglePainter extends CustomPainter {
-  const _TrianglePainter();
-  @override
-  void paint(Canvas canvas, Size s) => canvas.drawPath(
-      Path()
-        ..moveTo(0, s.height)
-        ..lineTo(s.width, s.height)
-        ..lineTo(0, 0)
-        ..close(),
-      Paint()..color = coral);
-  @override
-  bool shouldRepaint(covariant CustomPainter o) => false;
 }
