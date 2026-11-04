@@ -1,10 +1,31 @@
 import 'package:flutter/material.dart';
 
 const categories = ['Study', 'Fitness', 'Chores', 'Hobby', 'Other'];
+const _shortMonths = [
+  'JAN',
+  'FEB',
+  'MAR',
+  'APR',
+  'MAY',
+  'JUN',
+  'JUL',
+  'AUG',
+  'SEP',
+  'OCT',
+  'NOV',
+  'DEC'
+];
 const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 const dayInitials = ['M', 'T', 'W', 'Th', 'F', 'Sa', 'Su'];
 
-String dateKey(DateTime n) => '${n.year}-${n.month.toString().padLeft(2, '0')}-${n.day.toString().padLeft(2, '0')}';
+String dateKey(DateTime n) =>
+    '${n.year}-${n.month.toString().padLeft(2, '0')}-${n.day.toString().padLeft(2, '0')}';
+
+/// "2026-11-20" -> "NOV 20, 2026"
+String prettyDate(String key) {
+  final d = DateTime.parse(key);
+  return '${_shortMonths[d.month - 1]} ${d.day}, ${d.year}';
+}
 
 String todayKey() => dateKey(DateTime.now());
 
@@ -15,12 +36,29 @@ class Task {
   List<int> days; // weekly: 1 = Mon ... 7 = Sun
   bool _doneFlag;
   String? lastDone; // recurring tasks: date it was last completed
-  int streak, best; // consecutive scheduled days completed (current run / best run)
+  String? dueDate; // optional target date (yyyy-MM-dd) for one-time tasks
+  int streak,
+      best; // consecutive scheduled days completed (current run / best run)
   // snapshot taken at completion so un-ticking the same day restores the old streak
   int streakBefore, bestBefore;
   String? lastBefore;
 
-  Task({required this.id, required this.name, this.desc = '', required this.category, required this.xp, this.repeat = 'none', this.days = const [], bool done = false, this.lastDone, this.streak = 0, this.best = 0, this.streakBefore = 0, this.bestBefore = 0, this.lastBefore})
+  Task(
+      {required this.id,
+      required this.name,
+      this.desc = '',
+      required this.category,
+      required this.xp,
+      this.repeat = 'none',
+      this.days = const [],
+      bool done = false,
+      this.lastDone,
+      this.streak = 0,
+      this.best = 0,
+      this.streakBefore = 0,
+      this.bestBefore = 0,
+      this.lastBefore,
+      this.dueDate})
       : _doneFlag = done;
 
   bool get recurring => repeat != 'none';
@@ -65,6 +103,16 @@ class Task {
     return (lastDone == todayKey() || lastDone == _prevDueKey) ? streak : 0;
   }
 
+  /// Target date has passed and the task is not done.
+  bool get overdue =>
+      dueDate != null && !done && dueDate!.compareTo(todayKey()) < 0;
+
+  /// Target date is today.
+  bool get dueIsToday => dueDate == todayKey();
+
+  /// e.g. "NOV 20, 2026"
+  String get dueLabel => prettyDate(dueDate!);
+
   /// Copies progress (done state + streak data) from an older version of this task.
   void copyProgressFrom(Task o) {
     _doneFlag = o._doneFlag;
@@ -76,19 +124,39 @@ class Task {
     lastBefore = o.lastBefore;
   }
 
-  bool get dueToday => repeat != 'weekly' || days.contains(DateTime.now().weekday);
+  bool get dueToday =>
+      repeat != 'weekly' || days.contains(DateTime.now().weekday);
 
   /// "Completed" bucket: done today, or a recurring task whose last scheduled round was
   /// completed and which is now waiting for its next scheduled day.
-  bool get inCompleted => done || (recurring && !dueToday && lastDone != null && lastDone == _prevDueKey);
+  bool get inCompleted =>
+      done ||
+      (recurring && !dueToday && lastDone != null && lastDone == _prevDueKey);
 
   /// "Ongoing" bucket: available today and not done yet.
   bool get ongoing => !inCompleted && dueToday;
 
-  String get repeatLabel => repeat == 'daily' ? 'EVERY DAY' : days.map((d) => dayNames[d - 1]).join(' ');
+  String get repeatLabel => repeat == 'daily'
+      ? 'EVERY DAY'
+      : days.map((d) => dayNames[d - 1]).join(' ');
 
-  Map<String, dynamic> toJson() =>
-      {'id': id, 'name': name, 'desc': desc, 'category': category, 'xp': xp, 'done': _doneFlag, 'repeat': repeat, 'days': days, 'lastDone': lastDone, 'streak': streak, 'best': best, 'streakBefore': streakBefore, 'bestBefore': bestBefore, 'lastBefore': lastBefore};
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'desc': desc,
+        'category': category,
+        'xp': xp,
+        'done': _doneFlag,
+        'repeat': repeat,
+        'days': days,
+        'lastDone': lastDone,
+        'streak': streak,
+        'best': best,
+        'streakBefore': streakBefore,
+        'bestBefore': bestBefore,
+        'lastBefore': lastBefore,
+        'dueDate': dueDate
+      };
   factory Task.fromJson(Map<String, dynamic> j) => Task(
       id: j['id'],
       name: j['name'],
@@ -103,5 +171,6 @@ class Task {
       best: j['best'] ?? 0,
       streakBefore: j['streakBefore'] ?? 0,
       bestBefore: j['bestBefore'] ?? 0,
-      lastBefore: j['lastBefore']);
+      lastBefore: j['lastBefore'],
+      dueDate: j['dueDate']);
 }

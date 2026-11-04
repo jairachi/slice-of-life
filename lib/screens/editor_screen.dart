@@ -27,8 +27,35 @@ class _EditorScreenState extends State<EditorScreen> {
   bool get xpLocked => widget.task?.recurring ?? false;
   late String category = widget.task?.category ?? categories.first;
   late String repeat = widget.task?.repeat ?? 'none';
+  late String? dueDate =
+      widget.task?.dueDate; // optional target date (one-time tasks only)
   late final Set<int> days = {...?widget.task?.days};
   String? error;
+
+  /// Calendar to choose the task's target date (today or later).
+  Future<void> _pickDate() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    var initial = dueDate != null ? DateTime.parse(dueDate!) : today;
+    if (initial.isBefore(today)) initial = today;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: today,
+      lastDate: DateTime(now.year + 5, 12, 31),
+      helpText: 'TARGET DATE',
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+            colorScheme: const ColorScheme.light(
+                primary: coral,
+                onPrimary: cream,
+                surface: cream,
+                onSurface: cocoa)),
+        child: child!,
+      ),
+    );
+    if (picked != null) setState(() => dueDate = dateKey(picked));
+  }
 
   void _save() {
     final x = xpLocked
@@ -51,6 +78,7 @@ class _EditorScreenState extends State<EditorScreen> {
         category: category,
         xp: x,
         repeat: repeat,
+        dueDate: repeat == 'none' ? dueDate : null,
         days: repeat == 'weekly' ? (days.toList()..sort()) : [],
       ),
     );
@@ -226,6 +254,30 @@ class _EditorScreenState extends State<EditorScreen> {
                             ]),
                           ),
                         ),
+                      if (repeat == 'none') ...[
+                        _label('TARGET DATE'),
+                        Wrap(runSpacing: 4, children: [
+                          SlantChip(
+                            label: dueDate == null
+                                ? 'Pick a date'
+                                : prettyDate(dueDate!),
+                            selected: dueDate != null,
+                            off: Colors.white,
+                            pad: 14,
+                            trailing: Icon(Icons.calendar_month,
+                                size: 18,
+                                color: dueDate != null ? cream : coral),
+                            onTap: _pickDate,
+                          ),
+                          if (dueDate != null)
+                            SlantChip(
+                                label: 'Clear',
+                                selected: false,
+                                off: Colors.white,
+                                pad: 12,
+                                onTap: () => setState(() => dueDate = null)),
+                        ]),
+                      ],
                       if (error != null)
                         Padding(
                             padding: const EdgeInsets.only(top: 14),

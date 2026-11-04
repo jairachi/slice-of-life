@@ -61,8 +61,30 @@ class _CalendarDialogState extends State<CalendarDialog> {
     return m;
   }
 
+  String get _monthKey => '${month.year}-${month.month}';
+
+  /// Slides [child] out/in (direction follows [_dir]) whenever the month changes.
+  Widget _monthSlide(Widget child) => ClipRect(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 320),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          transitionBuilder: (c, anim) {
+            final incoming = c.key == ValueKey(_monthKey);
+            final from = incoming ? _dir.toDouble() : -_dir.toDouble();
+            return SlideTransition(
+              position: Tween<Offset>(begin: Offset(from, 0), end: Offset.zero)
+                  .animate(anim),
+              child: FadeTransition(opacity: anim, child: c),
+            );
+          },
+          child: KeyedSubtree(key: ValueKey(_monthKey), child: child),
+        ),
+      );
+
   void _shift(int d) => setState(() {
         _dir = d;
+        selected = null; // a different month: close the day panel
         month = DateTime(month.year, month.month + d);
       });
 
@@ -312,131 +334,131 @@ class _CalendarDialogState extends State<CalendarDialog> {
                                         width: 6)),
                               ),
                             ),
-                            // the month slides out/in when you change months
                             Padding(
                               padding: const EdgeInsets.fromLTRB(
                                   slant + 8, 14, slant + 8, 16),
-                              child: AnimatedSize(
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeInOutCubic,
-                                alignment: Alignment.topCenter,
-                                child: ClipRect(
-                                  child: AnimatedSwitcher(
-                                    duration: const Duration(milliseconds: 320),
-                                    switchInCurve: Curves.easeOutCubic,
-                                    switchOutCurve: Curves.easeInCubic,
-                                    transitionBuilder: (child, anim) {
-                                      final incoming = child.key ==
-                                          ValueKey(
-                                              '${month.year}-${month.month}');
-                                      final from = incoming
-                                          ? _dir.toDouble()
-                                          : -_dir.toDouble();
-                                      return SlideTransition(
-                                        position: Tween<Offset>(
-                                                begin: Offset(from, 0),
-                                                end: Offset.zero)
-                                            .animate(anim),
-                                        child: FadeTransition(
-                                            opacity: anim, child: child),
-                                      );
-                                    },
-                                    child: Column(
-                                        key: ValueKey(
-                                            '${month.year}-${month.month}'),
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.stretch,
-                                        children: [
-                                          // month row: previous month | big current month | next month
-                                          Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.center,
-                                              children: [
-                                                _monthArrow(
-                                                    left: true,
-                                                    number: prevMonth,
-                                                    enabled: true),
-                                                Column(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      Text('${month.month}',
-                                                          style: const TextStyle(
-                                                              fontSize: 82,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w900,
-                                                              fontStyle:
-                                                                  FontStyle
-                                                                      .italic,
-                                                              color: cocoa,
-                                                              height: 0.95)),
-                                                      Text(
-                                                          '${_monthNames[month.month - 1]}  ${month.year}',
-                                                          style: pixel(
-                                                              11, cocoa,
-                                                              height: 1.4,
-                                                              weight: FontWeight
-                                                                  .w700)),
-                                                    ]),
-                                                _monthArrow(
-                                                    left: false,
-                                                    number: nextMonth,
-                                                    enabled: _canGoForward),
-                                              ]),
-                                          const SizedBox(height: 14),
-                                          Row(children: [
-                                            for (var i = 0; i < 7; i++)
-                                              Expanded(
-                                                child: Center(
-                                                  child: Text(_weekdays[i],
-                                                      style: TextStyle(
-                                                          fontSize: 12,
+                              child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    // month row (big month number, neighbours): stays visible when a day is selected
+                                    _monthSlide(
+                                      Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            _monthArrow(
+                                                left: true,
+                                                number: prevMonth,
+                                                enabled: true),
+                                            Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text('${month.month}',
+                                                      style: const TextStyle(
+                                                          fontSize: 82,
                                                           fontWeight:
                                                               FontWeight.w900,
                                                           fontStyle:
                                                               FontStyle.italic,
-                                                          color: i == 0
-                                                              ? _sunRed
-                                                              : (i == 6
-                                                                  ? orange
-                                                                  : cocoa))),
-                                                ),
-                                              ),
+                                                          color: cocoa,
+                                                          height: 0.95)),
+                                                  Text(
+                                                      '${_monthNames[month.month - 1]}  ${month.year}',
+                                                      style: pixel(11, cocoa,
+                                                          height: 1.4,
+                                                          weight:
+                                                              FontWeight.w700)),
+                                                ]),
+                                            _monthArrow(
+                                                left: false,
+                                                number: nextMonth,
+                                                enabled: _canGoForward),
                                           ]),
-                                          const SizedBox(height: 4),
-                                          for (var r = 0; r < rows; r++)
-                                            Row(children: [
-                                              for (var c = 0; c < 7; c++)
-                                                Expanded(
-                                                    child: _cell(
-                                                        r * 7 + c - blanks + 1,
-                                                        c,
-                                                        daysInMonth,
-                                                        byDate,
-                                                        today)),
-                                            ]),
+                                    ),
+                                    const SizedBox(height: 14),
+                                    // weekday labels + days: the completed-tasks panel slides up over just this part
+                                    Stack(
+                                        clipBehavior: Clip.hardEdge,
+                                        children: [
+                                          AnimatedSize(
+                                            duration: const Duration(
+                                                milliseconds: 250),
+                                            curve: Curves.easeInOutCubic,
+                                            alignment: Alignment.topCenter,
+                                            child: _monthSlide(
+                                              Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment
+                                                          .stretch,
+                                                  children: [
+                                                    Row(children: [
+                                                      for (var i = 0;
+                                                          i < 7;
+                                                          i++)
+                                                        Expanded(
+                                                          child: Center(
+                                                            child: Text(
+                                                                _weekdays[i],
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        12,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w900,
+                                                                    fontStyle:
+                                                                        FontStyle
+                                                                            .italic,
+                                                                    color: i ==
+                                                                            0
+                                                                        ? _sunRed
+                                                                        : (i == 6
+                                                                            ? orange
+                                                                            : cocoa))),
+                                                          ),
+                                                        ),
+                                                    ]),
+                                                    const SizedBox(height: 4),
+                                                    for (var r = 0;
+                                                        r < rows;
+                                                        r++)
+                                                      Row(children: [
+                                                        for (var c = 0;
+                                                            c < 7;
+                                                            c++)
+                                                          Expanded(
+                                                              child: _cell(
+                                                                  r * 7 +
+                                                                      c -
+                                                                      blanks +
+                                                                      1,
+                                                                  c,
+                                                                  daysInMonth,
+                                                                  byDate,
+                                                                  today)),
+                                                      ]),
+                                                  ]),
+                                            ),
+                                          ),
+                                          Positioned.fill(
+                                            child: IgnorePointer(
+                                              ignoring: selected == null,
+                                              child: AnimatedSlide(
+                                                offset: selected == null
+                                                    ? const Offset(0, 1)
+                                                    : Offset.zero,
+                                                duration: const Duration(
+                                                    milliseconds: 380),
+                                                curve: Curves.easeOutCubic,
+                                                child: _detailPanel(
+                                                    slant, entries, xpTotal),
+                                              ),
+                                            ),
+                                          ),
                                         ]),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            // completed-tasks panel: slides up over the days when a day is tapped
-                            Positioned.fill(
-                              child: IgnorePointer(
-                                ignoring: selected == null,
-                                child: AnimatedSlide(
-                                  offset: selected == null
-                                      ? const Offset(0, 1)
-                                      : Offset.zero,
-                                  duration: const Duration(milliseconds: 380),
-                                  curve: Curves.easeOutCubic,
-                                  child: _detailPanel(slant, entries, xpTotal),
-                                ),
-                              ),
+                                  ]),
                             ),
                           ]),
                         ),

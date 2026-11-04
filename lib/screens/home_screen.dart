@@ -14,7 +14,9 @@ import '../popups/calendar_dialog.dart';
 import '../popups/level_up_dialog.dart';
 import '../popups/name_dialog.dart';
 import '../popups/option_picker.dart';
+import '../popups/reminder_dialog.dart';
 import '../popups/stats_dialog.dart';
+import '../services/notification_service.dart';
 import '../widgets/slant_widgets.dart';
 import '../widgets/xp_gain_pill.dart';
 import 'editor_screen.dart';
@@ -42,6 +44,9 @@ class _HomeScreenState extends State<HomeScreen>
   Offset? _gainPos;
   List<HistoryEntry> history =
       []; // one entry per completed task (feeds the calendar)
+  bool remindersOn =
+      false; // reminder notifications (off until the user turns them on)
+  TimeOfDay remindTime = const TimeOfDay(hour: 9, minute: 0);
   List<Task> tasks = [];
   int totalXp = 0;
   Map<String, int> catXp = {}, catCount = {}; // per-category stats
@@ -80,6 +85,10 @@ class _HomeScreenState extends State<HomeScreen>
       catXp = Map<String, int>.from(jsonDecode(p.getString('catXp') ?? '{}'));
       catCount =
           Map<String, int>.from(jsonDecode(p.getString('catCount') ?? '{}'));
+      remindersOn = p.getBool('remindersOn') ?? false;
+      remindTime = TimeOfDay(
+          hour: p.getInt('remindHour') ?? 9,
+          minute: p.getInt('remindMinute') ?? 0);
       history = (jsonDecode(p.getString('history') ?? '[]') as List)
           .map((e) => HistoryEntry.fromJson(e))
           .toList();
@@ -89,6 +98,7 @@ class _HomeScreenState extends State<HomeScreen>
       if (raw != null)
         tasks = (jsonDecode(raw) as List).map((e) => Task.fromJson(e)).toList();
     });
+    _syncReminders(); // rebuild scheduled reminders (e.g. after an app update or reboot)
     if (savedName == null || savedName.isEmpty) _askName();
   }
 
@@ -125,6 +135,7 @@ class _HomeScreenState extends State<HomeScreen>
     await p.setString('catCount', jsonEncode(catCount));
     await p.setString(
         'history', jsonEncode(history.map((e) => e.toJson()).toList()));
+    _syncReminders(); // task or completion changed: refresh target-date reminders
   }
 
   int _clamp(int v) => v < 0 ? 0 : v;
@@ -228,6 +239,29 @@ class _HomeScreenState extends State<HomeScreen>
           builder: (_) => LevelUpDialog(level: after, name: name));
     }
   }
+
+  void _syncReminders() => NotificationService.sync(
+      enabled: remindersOn, time: remindTime, tasks: tasks);
+
+  /// Called by the reminder popup. Returns false if reminders could not be turned on
+  /// (notification permission denied).
+  Future<bool> _setReminders(bool on, TimeOfDay time) async {
+    if (on && !await NotificationService.requestPermission()) return false;
+    setState(() {
+      remindersOn = on;
+      remindTime = time;
+    });
+    final p = await SharedPreferences.getInstance();
+    await p.setBool('remindersOn', on);
+    await p.setInt('remindHour', time.hour);
+    await p.setInt('remindMinute', time.minute);
+    _syncReminders();
+    return true;
+  }
+
+  void _showReminders() => showFade<void>(context,
+      builder: (_) => ReminderDialog(
+          enabled: remindersOn, time: remindTime, onChanged: _setReminders));
 
   void _showCalendar() =>
       showFade<void>(context, builder: (_) => CalendarDialog(history: history));
@@ -439,6 +473,7 @@ class _HomeScreenState extends State<HomeScreen>
       (Icons.edit, 'Change name', () => _askName(editing: true)),
       (Icons.face, 'Change persona', _pickCharacter),
       (Icons.calendar_month, 'Calendar', _showCalendar),
+      (Icons.notifications_active, 'Reminders', _showReminders),
       (Icons.bar_chart, 'Stats', _showStats),
     ];
     return Column(
@@ -915,6 +950,24 @@ class _HomeScreenState extends State<HomeScreen>
                                             height: 1,
                                             weight: FontWeight.w700)),
                                   ],
+                                ]),
+                              ],
+                              if (t.dueDate != null) ...[
+                                const SizedBox(height: 8),
+                                Row(children: [
+                                  Icon(Icons.flag,
+                                      size: 16, color: t.overdue ? sun : peach),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      'TARGET  ${t.dueLabel}${t.overdue ? '  ·  OVERDUE' : (t.dueIsToday && !t.done ? '  ·  TODAY' : '')}',
+                                      style: TextStyle(
+                                          color: t.overdue ? sun : peach,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 1),
+                                    ),
+                                  ),
                                 ]),
                               ],
                             ]),
