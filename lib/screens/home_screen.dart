@@ -119,14 +119,48 @@ class _HomeScreenState extends State<HomeScreen>
     catCount[t.category] = _clamp((catCount[t.category] ?? 0) + sign);
   }
 
+  /// App-styled message popup (slanted dark panel, coral offset slab, lock icon).
   void _snack(String message) => ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(
-      content: Text(message,
-          style: const TextStyle(color: cream, fontWeight: FontWeight.w700)),
-      backgroundColor: cocoa,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      padding: EdgeInsets.zero,
       behavior: SnackBarBehavior.floating,
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
       duration: const Duration(seconds: 2),
+      content: Padding(
+        padding: const EdgeInsets.only(right: 6, bottom: 6),
+        child: Stack(children: [
+          Positioned.fill(
+            child: Transform.translate(
+                offset: const Offset(6, 6),
+                child: ClipPath(
+                    clipper: const Para(12),
+                    child: const ColoredBox(color: coral))),
+          ),
+          ClipPath(
+            clipper: const Para(12),
+            child: Container(
+              color: cocoa,
+              padding: const EdgeInsets.fromLTRB(28, 14, 26, 14),
+              child: Row(children: [
+                const Icon(Icons.lock_outline, color: sun, size: 22),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(message,
+                      style: const TextStyle(
+                          color: cream,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          fontStyle: FontStyle.italic,
+                          height: 1.3)),
+                ),
+              ]),
+            ),
+          ),
+        ]),
+      ),
     ));
 
   void _toggle(Task t) {

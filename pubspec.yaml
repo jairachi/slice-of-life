@@ -1,7 +1,7 @@
 name: sol
 description: Slice of Life - a gamified task app MVP.
 publish_to: none
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -10,6 +10,15 @@ dependencies:
   flutter:
     sdk: flutter
   shared_preferences: ^2.2.0
+
+dev_dependencies:
+  flutter_launcher_icons: ^0.14.1
+
+flutter_launcher_icons:
+  image_path: "assets/icon/icon.png"
+  android: true
+  ios: true
+  remove_alpha_ios: true
 
 flutter:
   uses-material-design: true
