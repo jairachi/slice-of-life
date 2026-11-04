@@ -7,6 +7,7 @@ import '../character/character_picker.dart';
 import '../core/palette.dart';
 import '../core/shapes.dart';
 import '../core/transitions.dart';
+import '../data/task_database.dart';
 import '../models/history.dart';
 import '../models/leveling.dart';
 import '../models/task.dart';
@@ -14,12 +15,12 @@ import '../popups/calendar_dialog.dart';
 import '../popups/level_up_dialog.dart';
 import '../popups/name_dialog.dart';
 import '../popups/option_picker.dart';
-import '../popups/reminder_dialog.dart';
 import '../popups/stats_dialog.dart';
 import '../services/notification_service.dart';
 import '../widgets/slant_widgets.dart';
 import '../widgets/xp_gain_pill.dart';
 import 'editor_screen.dart';
+import 'settings_screen.dart';
 
 const statusLabels = {
   'ongoing': 'Ongoing',
@@ -78,7 +79,17 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _load() async {
     final p = await SharedPreferences.getInstance();
-    final raw = p.getString('tasks');
+    final db = TaskDatabase.instance;
+    var loadedTasks = <Task>[];
+    var loadedHistory = <HistoryEntry>[];
+    try {
+      await db
+          .migrateFromPrefs(p); // one-time move of data saved by older versions
+      loadedTasks = await db.loadTasks();
+      loadedHistory = await db.loadHistory();
+    } catch (e) {
+      debugPrint('Could not open the database: $e');
+    }
     final savedName = p.getString('name');
     setState(() {
       totalXp = p.getInt('xp') ?? 0;
@@ -89,14 +100,11 @@ class _HomeScreenState extends State<HomeScreen>
       remindTime = TimeOfDay(
           hour: p.getInt('remindHour') ?? 9,
           minute: p.getInt('remindMinute') ?? 0);
-      history = (jsonDecode(p.getString('history') ?? '[]') as List)
-          .map((e) => HistoryEntry.fromJson(e))
-          .toList();
+      history = loadedHistory;
       name = savedName ?? '';
       character = p.getString('character') ?? defaultCharacter;
       loaded = true;
-      if (raw != null)
-        tasks = (jsonDecode(raw) as List).map((e) => Task.fromJson(e)).toList();
+      tasks = loadedTasks;
     });
     _syncReminders(); // rebuild scheduled reminders (e.g. after an app update or reboot)
     if (savedName == null || savedName.isEmpty) _askName();
@@ -128,13 +136,9 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _save() async {
     final p = await SharedPreferences.getInstance();
-    await p.setString(
-        'tasks', jsonEncode(tasks.map((t) => t.toJson()).toList()));
     await p.setInt('xp', totalXp);
     await p.setString('catXp', jsonEncode(catXp));
     await p.setString('catCount', jsonEncode(catCount));
-    await p.setString(
-        'history', jsonEncode(history.map((e) => e.toJson()).toList()));
     _syncReminders(); // task or completion changed: refresh target-date reminders
   }
 
@@ -217,18 +221,22 @@ class _HomeScreenState extends State<HomeScreen>
       t.done = !t.done;
       _credit(t, t.done ? 1 : -1);
       if (t.done) {
-        history.add(HistoryEntry(
+        final entry = HistoryEntry(
             date: todayKey(),
             taskId: t.id,
             name: t.name,
             category: t.category,
-            xp: t.xp));
+            xp: t.xp);
+        history.add(entry);
+        TaskDatabase.instance.addHistory(entry);
       } else {
         history.removeWhere((e) =>
             e.taskId == t.id &&
             e.date == todayKey()); // undo today's completion
+        TaskDatabase.instance.removeHistory(t.id, todayKey());
       }
     });
+    TaskDatabase.instance.saveTask(t);
     _save();
     t.done ? HapticFeedback.mediumImpact() : HapticFeedback.lightImpact();
     _showGain(t.done ? t.xp : -t.xp, at);
@@ -259,9 +267,21 @@ class _HomeScreenState extends State<HomeScreen>
     return true;
   }
 
-  void _showReminders() => showFade<void>(context,
-      builder: (_) => ReminderDialog(
-          enabled: remindersOn, time: remindTime, onChanged: _setReminders));
+  /// Settings page (name, persona, reminders).
+  void _openSettings() => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => SettingsScreen(
+            getName: () => name,
+            getCharacter: () => character,
+            getRemindersOn: () => remindersOn,
+            getRemindTime: () => remindTime,
+            onChangeName: () => _askName(editing: true),
+            onChangePersona: _pickCharacter,
+            onReminders: _setReminders,
+          ),
+        ),
+      );
 
   void _showCalendar() =>
       showFade<void>(context, builder: (_) => CalendarDialog(history: history));
@@ -289,6 +309,7 @@ class _HomeScreenState extends State<HomeScreen>
       if (res == 'delete' && t != null) {
         if (t.done) _credit(t, -1);
         tasks.remove(t);
+        TaskDatabase.instance.deleteTask(t.id);
       } else if (res is Task) {
         final i = tasks.indexWhere((x) => x.id == res.id);
         if (i >= 0) {
@@ -298,8 +319,10 @@ class _HomeScreenState extends State<HomeScreen>
           if (old.repeat == res.repeat) res.copyProgressFrom(old);
           if (res.done) _credit(res, 1);
           tasks[i] = res;
+          TaskDatabase.instance.saveTask(res);
         } else {
           tasks.add(res);
+          TaskDatabase.instance.saveTask(res);
         }
       }
     });
@@ -470,11 +493,9 @@ class _HomeScreenState extends State<HomeScreen>
   Widget _dock() {
     final List<(IconData, String, VoidCallback)> items = [
       (Icons.add, 'New task', () => _edit()),
-      (Icons.edit, 'Change name', () => _askName(editing: true)),
-      (Icons.face, 'Change persona', _pickCharacter),
       (Icons.calendar_month, 'Calendar', _showCalendar),
-      (Icons.notifications_active, 'Reminders', _showReminders),
       (Icons.bar_chart, 'Stats', _showStats),
+      (Icons.settings, 'Settings', _openSettings),
     ];
     return Column(
         mainAxisSize: MainAxisSize.min,
