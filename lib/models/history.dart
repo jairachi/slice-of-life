@@ -21,6 +21,21 @@ class HistoryEntry {
         'xp': xp
       };
 
+  Map<String, Object?> toDb() => {
+        'date': date,
+        'task_id': taskId,
+        'name': name,
+        'category': category,
+        'xp': xp
+      };
+
+  factory HistoryEntry.fromDb(Map<String, Object?> m) => HistoryEntry(
+      date: m['date'] as String,
+      taskId: m['task_id'] as String,
+      name: m['name'] as String,
+      category: m['category'] as String,
+      xp: m['xp'] as int);
+
   factory HistoryEntry.fromJson(Map<String, dynamic> j) => HistoryEntry(
       date: j['date'],
       taskId: j['taskId'],

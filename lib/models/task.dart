@@ -113,6 +113,48 @@ class Task {
   /// e.g. "NOV 20, 2026"
   String get dueLabel => prettyDate(dueDate!);
 
+  /// Row for the `tasks` table (column order/position is managed by the database layer).
+  Map<String, Object?> toDb() => {
+        'id': id,
+        'name': name,
+        'description': desc,
+        'category': category,
+        'xp': xp,
+        'repeat_type': repeat,
+        'days': days.join(','),
+        'done': _doneFlag ? 1 : 0,
+        'last_done': lastDone,
+        'streak': streak,
+        'best': best,
+        'streak_before': streakBefore,
+        'best_before': bestBefore,
+        'last_before': lastBefore,
+        'due_date': dueDate,
+      };
+
+  factory Task.fromDb(Map<String, Object?> m) {
+    final rawDays = (m['days'] as String?) ?? '';
+    return Task(
+      id: m['id'] as String,
+      name: m['name'] as String,
+      desc: (m['description'] as String?) ?? '',
+      category: m['category'] as String,
+      xp: m['xp'] as int,
+      repeat: (m['repeat_type'] as String?) ?? 'none',
+      days: rawDays.isEmpty
+          ? <int>[]
+          : rawDays.split(',').map(int.parse).toList(),
+      done: ((m['done'] as int?) ?? 0) == 1,
+      lastDone: m['last_done'] as String?,
+      streak: (m['streak'] as int?) ?? 0,
+      best: (m['best'] as int?) ?? 0,
+      streakBefore: (m['streak_before'] as int?) ?? 0,
+      bestBefore: (m['best_before'] as int?) ?? 0,
+      lastBefore: m['last_before'] as String?,
+      dueDate: m['due_date'] as String?,
+    );
+  }
+
   /// Copies progress (done state + streak data) from an older version of this task.
   void copyProgressFrom(Task o) {
     _doneFlag = o._doneFlag;

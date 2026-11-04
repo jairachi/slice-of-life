@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/palette.dart';
 import '../core/shapes.dart';
 import '../models/task.dart';
+import '../popups/date_picker_dialog.dart';
 import '../widgets/slant_widgets.dart';
 
 const xpPresets = [10, 25, 50, 75];
@@ -32,28 +33,17 @@ class _EditorScreenState extends State<EditorScreen> {
   late final Set<int> days = {...?widget.task?.days};
   String? error;
 
-  /// Calendar to choose the task's target date (today or later).
+  /// App-styled calendar to choose the task's target date (today or later).
   Future<void> _pickDate() async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     var initial = dueDate != null ? DateTime.parse(dueDate!) : today;
     if (initial.isBefore(today)) initial = today;
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: today,
-      lastDate: DateTime(now.year + 5, 12, 31),
-      helpText: 'TARGET DATE',
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-            colorScheme: const ColorScheme.light(
-                primary: coral,
-                onPrimary: cream,
-                surface: cream,
-                onSurface: cocoa)),
-        child: child!,
-      ),
-    );
+    final picked = await pickDate(context,
+        initial: initial,
+        first: today,
+        last: DateTime(now.year + 5, 12, 31),
+        title: 'TARGET DATE');
     if (picked != null) setState(() => dueDate = dateKey(picked));
   }
 
