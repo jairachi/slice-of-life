@@ -1,18 +1,22 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../character/character_art.dart';
 import '../character/character_picker.dart';
 import '../core/palette.dart';
 import '../core/shapes.dart';
 import '../core/transitions.dart';
+import '../models/history.dart';
 import '../models/leveling.dart';
 import '../models/task.dart';
+import '../popups/calendar_dialog.dart';
 import '../popups/level_up_dialog.dart';
 import '../popups/name_dialog.dart';
 import '../popups/option_picker.dart';
 import '../popups/stats_dialog.dart';
 import '../widgets/slant_widgets.dart';
+import '../widgets/xp_gain_pill.dart';
 import 'editor_screen.dart';
 
 const statusLabels = {
@@ -28,9 +32,16 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen>
-    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+    with WidgetsBindingObserver, TickerProviderStateMixin {
   late final AnimationController _menuCtl = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 380));
+  late final AnimationController _gainCtl = AnimationController(
+      vsync: this, duration: const Duration(milliseconds: 1000));
+  final GlobalKey _stackKey = GlobalKey();
+  int _gainAmount = 0; // floating "+XP" badge
+  Offset? _gainPos;
+  List<HistoryEntry> history =
+      []; // one entry per completed task (feeds the calendar)
   List<Task> tasks = [];
   int totalXp = 0;
   Map<String, int> catXp = {}, catCount = {}; // per-category stats
@@ -50,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _menuCtl.dispose();
+    _gainCtl.dispose();
     super.dispose();
   }
 
@@ -68,6 +80,9 @@ class _HomeScreenState extends State<HomeScreen>
       catXp = Map<String, int>.from(jsonDecode(p.getString('catXp') ?? '{}'));
       catCount =
           Map<String, int>.from(jsonDecode(p.getString('catCount') ?? '{}'));
+      history = (jsonDecode(p.getString('history') ?? '[]') as List)
+          .map((e) => HistoryEntry.fromJson(e))
+          .toList();
       name = savedName ?? '';
       character = p.getString('character') ?? defaultCharacter;
       loaded = true;
@@ -108,6 +123,8 @@ class _HomeScreenState extends State<HomeScreen>
     await p.setInt('xp', totalXp);
     await p.setString('catXp', jsonEncode(catXp));
     await p.setString('catCount', jsonEncode(catCount));
+    await p.setString(
+        'history', jsonEncode(history.map((e) => e.toJson()).toList()));
   }
 
   int _clamp(int v) => v < 0 ? 0 : v;
@@ -163,7 +180,21 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     ));
 
-  void _toggle(Task t) {
+  /// Floating "+XP" badge near [global] (the tap position), plus the rise/fade animation.
+  void _showGain(int amount, Offset? global) {
+    final box = _stackKey.currentContext?.findRenderObject() as RenderBox?;
+    final size = MediaQuery.of(context).size;
+    final local = (global != null && box != null)
+        ? box.globalToLocal(global)
+        : Offset(size.width / 2, size.height * 0.3);
+    setState(() {
+      _gainAmount = amount;
+      _gainPos = local;
+    });
+    _gainCtl.forward(from: 0);
+  }
+
+  void _toggle(Task t, [Offset? at]) {
     if (!t.dueToday) return; // recurring task not scheduled today
     // a completed one-time task is final: it cannot be un-ticked
     if (!t.recurring && t.done) {
@@ -174,14 +205,32 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() {
       t.done = !t.done;
       _credit(t, t.done ? 1 : -1);
+      if (t.done) {
+        history.add(HistoryEntry(
+            date: todayKey(),
+            taskId: t.id,
+            name: t.name,
+            category: t.category,
+            xp: t.xp));
+      } else {
+        history.removeWhere((e) =>
+            e.taskId == t.id &&
+            e.date == todayKey()); // undo today's completion
+      }
     });
     _save();
+    t.done ? HapticFeedback.mediumImpact() : HapticFeedback.lightImpact();
+    _showGain(t.done ? t.xp : -t.xp, at);
     final after = levelFor(totalXp).level;
     if (after > before) {
+      HapticFeedback.heavyImpact();
       showFade<void>(context,
           builder: (_) => LevelUpDialog(level: after, name: name));
     }
   }
+
+  void _showCalendar() =>
+      showFade<void>(context, builder: (_) => CalendarDialog(history: history));
 
   Future<void> _edit([Task? t]) async {
     // completed one-time tasks are read-only
@@ -389,6 +438,7 @@ class _HomeScreenState extends State<HomeScreen>
       (Icons.add, 'New task', () => _edit()),
       (Icons.edit, 'Change name', () => _askName(editing: true)),
       (Icons.face, 'Change persona', _pickCharacter),
+      (Icons.calendar_month, 'Calendar', _showCalendar),
       (Icons.bar_chart, 'Stats', _showStats),
     ];
     return Column(
@@ -439,7 +489,7 @@ class _HomeScreenState extends State<HomeScreen>
             ? 'No completed tasks yet.'
             : 'No tasks in this category.');
     return Scaffold(
-      body: Stack(children: [
+      body: Stack(key: _stackKey, children: [
         Container(
           decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -521,6 +571,36 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
         ),
+        if (_gainPos != null)
+          Positioned(
+            left: (_gainPos!.dx - 60)
+                .clamp(8.0, MediaQuery.of(context).size.width - 130)
+                .toDouble(),
+            top: _gainPos!.dy - 80,
+            child: IgnorePointer(
+              child: AnimatedBuilder(
+                animation: _gainCtl,
+                builder: (_, __) {
+                  final t = _gainCtl.value;
+                  final rise = Curves.easeOutCubic.transform(t) * 56;
+                  final opacity = t < 0.65
+                      ? 1.0
+                      : (1 - (t - 0.65) / 0.35).clamp(0.0, 1.0).toDouble();
+                  final pop = 0.8 +
+                      0.25 *
+                          Curves.easeOutBack
+                              .transform((t * 3).clamp(0.0, 1.0).toDouble());
+                  return Opacity(
+                    opacity: opacity,
+                    child: Transform.translate(
+                        offset: Offset(0, -rise),
+                        child: Transform.scale(
+                            scale: pop, child: XpGainPill(_gainAmount))),
+                  );
+                },
+              ),
+            ),
+          ),
       ]),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       floatingActionButton: Column(
@@ -687,10 +767,18 @@ class _HomeScreenState extends State<HomeScreen>
                                       Container(
                                           height: 5,
                                           color: cocoa.withOpacity(0.35)),
-                                      FractionallySizedBox(
-                                          widthFactor: pct,
-                                          child: Container(
-                                              height: 5, color: cream)),
+                                      // fills smoothly whenever XP changes
+                                      TweenAnimationBuilder<double>(
+                                        tween: Tween<double>(end: pct),
+                                        duration:
+                                            const Duration(milliseconds: 700),
+                                        curve: Curves.easeOutCubic,
+                                        builder: (_, v, __) =>
+                                            FractionallySizedBox(
+                                                widthFactor: v,
+                                                child: Container(
+                                                    height: 5, color: cream)),
+                                      ),
                                     ]),
                                   ]),
                             ),
@@ -744,7 +832,7 @@ class _HomeScreenState extends State<HomeScreen>
                                   slant + 10, 8, 30, 8),
                               child: Row(children: [
                                 GestureDetector(
-                                  onTap: () => _toggle(t),
+                                  onTapUp: (d) => _toggle(t, d.globalPosition),
                                   child: Container(
                                     width: 24,
                                     height: 24,

@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.sol"
+    namespace = "com.jairachi.sliceoflife"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
