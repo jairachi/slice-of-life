@@ -7,7 +7,7 @@
 
 <!--
   Add screenshots to docs/screenshots/ and uncomment this block (see "Screenshots" below):
-  <p align="center"><img src="docs/screenshots/home.png" width="260"> <img src="docs/screenshots/stats.png" width="260"> <img src="docs/screenshots/calendar.png" width="260"></p>
+
 -->
 
 ## Why Slice of Life?
@@ -65,9 +65,7 @@ and would be more motivated if real-world wins counted as progress in a game.
 
 ## Screenshots
 
-<!-- Replace with real screenshots: home screen, task editor, stats pentagon, calendar, persona picker, settings. -->
-
-Screenshots coming soon. Put them in `docs/screenshots/` and link them here.
+<p align="center"><img src="docs/screenshots/home.jpg" width="260"> <img src="docs/screenshots/task_editor.jpg" width="260"> <img src="docs/screenshots/stats.jpg" width="260"> <img src="docs/screenshots/calendar.jpg" width="260"> <img src="docs/screenshots/clock.jpg" width="260"></p>
 
 ## Get the app
 
