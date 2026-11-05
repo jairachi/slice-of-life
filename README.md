@@ -67,9 +67,9 @@ and would be more motivated if real-world wins counted as progress in a game.
 
 <p align="center"><img src="docs/screenshots/home.jpg" width="260"> <img src="docs/screenshots/task_editor.jpg" width="260"> <img src="docs/screenshots/stats.jpg" width="260"> <img src="docs/screenshots/calendar.jpg" width="260"> <img src="docs/screenshots/clock.jpg" width="260"></p>
 
-## Get the app
+## Get or try the app
 
-**Android (easiest):** download the latest `.apk` from the [Releases](../../releases) page, open it on your phone
+**Android:** download the latest `.apk` from the [Releases](../../releases) page, open it on your phone
 and allow installs from unknown sources if asked. (Releases are published by the author; if there is no release yet,
 build it yourself below.)
 
@@ -105,7 +105,7 @@ Ideas that fit the app and are not built yet:
 
 ## About this project
 
-Slice of Life is a student project, an MVP built for the course _BSCS 2103 Application Development & Emerging
+Slice of Life is a student project, an MVP (Minimum Viable Product) built for the course _BSCS 2103 Application Development & Emerging
 Technologies_. The idea, requirements document and design direction are by **Michal Jireh de la Cruz**; the app was
 built by him with the help of AI tools, as the course asked.
 
@@ -115,4 +115,4 @@ affiliated with or endorsed by Atlus or SEGA, and it uses no assets from the gam
 
 ## License
 
-No license has been chosen yet. Until one is added, all rights are reserved by the author.
+Released under the [MIT License](LICENSE).
