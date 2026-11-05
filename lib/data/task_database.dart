@@ -15,6 +15,15 @@ class TaskDatabase {
   TaskDatabase._();
   static final TaskDatabase instance = TaskDatabase._();
 
+  /// sqflite only works on Android, iOS and macOS. On other platforms (web, Windows, Linux) it has
+  /// no database factory, so there the same data is kept as JSON in SharedPreferences instead.
+  /// That keeps the app usable for debugging on those platforms.
+  static bool get _useSqlite =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS);
+
   Database? _db;
   Future<Database> get _database async => _db ??= await _open();
 
@@ -63,6 +72,7 @@ class TaskDatabase {
   // ---------------- tasks ----------------
 
   Future<List<Task>> loadTasks() async {
+    if (!_useSqlite) return _fallbackTasks();
     final db = await _database;
     final rows = await db.query('tasks', orderBy: 'position ASC');
     return rows.map(Task.fromDb).toList();
@@ -70,6 +80,12 @@ class TaskDatabase {
 
   /// Inserts a new task (at the end of the list) or updates an existing one in place.
   Future<void> saveTask(Task t) async {
+    if (!_useSqlite) {
+      final list = await _fallbackTasks();
+      final i = list.indexWhere((x) => x.id == t.id);
+      i >= 0 ? list[i] = t : list.add(t);
+      return _fallbackWriteTasks(list);
+    }
     final db = await _database;
     final updated =
         await db.update('tasks', t.toDb(), where: 'id = ?', whereArgs: [t.id]);
@@ -82,6 +98,9 @@ class TaskDatabase {
   }
 
   Future<void> deleteTask(String id) async {
+    if (!_useSqlite)
+      return _fallbackWriteTasks(
+          (await _fallbackTasks())..removeWhere((x) => x.id == id));
     final db = await _database;
     await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
   }
@@ -89,18 +108,24 @@ class TaskDatabase {
   // ---------------- history ----------------
 
   Future<List<HistoryEntry>> loadHistory() async {
+    if (!_useSqlite) return _fallbackHistory();
     final db = await _database;
     final rows = await db.query('history', orderBy: 'id ASC');
     return rows.map(HistoryEntry.fromDb).toList();
   }
 
   Future<void> addHistory(HistoryEntry e) async {
+    if (!_useSqlite)
+      return _fallbackWriteHistory((await _fallbackHistory())..add(e));
     final db = await _database;
     await db.insert('history', e.toDb());
   }
 
   /// Removes a task's completion entries for one day (used when a recurring task is un-ticked).
   Future<void> removeHistory(String taskId, String date) async {
+    if (!_useSqlite)
+      return _fallbackWriteHistory((await _fallbackHistory())
+        ..removeWhere((e) => e.taskId == taskId && e.date == date));
     final db = await _database;
     await db.delete('history',
         where: 'task_id = ? AND date = ?', whereArgs: [taskId, date]);
@@ -110,6 +135,8 @@ class TaskDatabase {
 
   /// Moves tasks/history saved by earlier versions (SharedPreferences JSON) into SQLite.
   Future<void> migrateFromPrefs(SharedPreferences prefs) async {
+    if (!_useSqlite)
+      return; // the fallback keeps using the original SharedPreferences keys
     if (prefs.getBool('sqliteMigrated') == true) return;
     final db = await _database;
     final rawTasks = prefs.getString('tasks');
@@ -139,4 +166,30 @@ class TaskDatabase {
       debugPrint('Migration to SQLite failed (old data kept): $e');
     }
   }
+
+  // ---------------- fallback store (web / desktop) ----------------
+
+  Future<List<Task>> _fallbackTasks() async {
+    final raw = (await SharedPreferences.getInstance()).getString('tasks');
+    return raw == null
+        ? <Task>[]
+        : (jsonDecode(raw) as List).map((e) => Task.fromJson(e)).toList();
+  }
+
+  Future<void> _fallbackWriteTasks(List<Task> list) async =>
+      (await SharedPreferences.getInstance())
+          .setString('tasks', jsonEncode(list.map((t) => t.toJson()).toList()));
+
+  Future<List<HistoryEntry>> _fallbackHistory() async {
+    final raw = (await SharedPreferences.getInstance()).getString('history');
+    return raw == null
+        ? <HistoryEntry>[]
+        : (jsonDecode(raw) as List)
+            .map((e) => HistoryEntry.fromJson(e))
+            .toList();
+  }
+
+  Future<void> _fallbackWriteHistory(List<HistoryEntry> list) async =>
+      (await SharedPreferences.getInstance()).setString(
+          'history', jsonEncode(list.map((e) => e.toJson()).toList()));
 }

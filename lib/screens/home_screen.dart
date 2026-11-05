@@ -17,6 +17,7 @@ import '../popups/name_dialog.dart';
 import '../popups/option_picker.dart';
 import '../popups/stats_dialog.dart';
 import '../services/notification_service.dart';
+import '../widgets/calendar_parts.dart';
 import '../widgets/slant_widgets.dart';
 import '../widgets/xp_gain_pill.dart';
 import 'editor_screen.dart';
@@ -552,67 +553,71 @@ class _HomeScreenState extends State<HomeScreen>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [Color(0xFFFFF1D6), sun, orange])),
-          child: SafeArea(
-            // Whole page scrolls together: title, profile, then tasks.
-            child: ListView(
-              padding: const EdgeInsets.only(bottom: 100),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Center(
-                    child: Text.rich(TextSpan(
-                        style: pixel(30, ink, weight: FontWeight.w700),
-                        children: [
-                          TextSpan(
-                              text: 'SLICE ', style: TextStyle(color: coral)),
-                          TextSpan(
-                              text: 'OF LIFE', style: TextStyle(color: ink)),
-                        ])),
-                  ),
-                ),
-                _profile(lv),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Center(
-                      child: Text('TASKS',
-                          style: pixel(22, coral, weight: FontWeight.w700))),
-                ),
-                _filterBar(),
-                const SizedBox(height: 12),
-                if (tasks.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
-                    child: Center(
-                        child: Text('No tasks yet. Open the menu to add one.',
-                            style: TextStyle(color: ink))),
-                  )
-                else if (shown.isEmpty && unavailable.isEmpty)
+          child: Stack(children: [
+            // two orange circles with rings bleeding in from the top-right and bottom-left corners
+            const Positioned.fill(child: CornerCircles()),
+            SafeArea(
+              // Whole page scrolls together: title, profile, then tasks.
+              child: ListView(
+                padding: const EdgeInsets.only(bottom: 100),
+                children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 40),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     child: Center(
-                        child:
-                            Text(emptyMsg, style: const TextStyle(color: ink))),
-                  )
-                else ...[
-                  for (final t in shown)
-                    Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 22, 20),
-                        child: _row(t)),
-                  if (unavailable.isNotEmpty) ...[
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
-                      child: Text('NOT TODAY',
-                          style: pixel(16, ink, weight: FontWeight.w700)),
+                      child: Text.rich(TextSpan(
+                          style: pixel(30, ink, weight: FontWeight.w700),
+                          children: [
+                            TextSpan(
+                                text: 'SLICE ', style: TextStyle(color: coral)),
+                            TextSpan(
+                                text: 'OF LIFE', style: TextStyle(color: ink)),
+                          ])),
                     ),
-                    for (final t in unavailable)
+                  ),
+                  _profile(lv),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Center(
+                        child: Text('TASKS',
+                            style: pixel(22, coral, weight: FontWeight.w700))),
+                  ),
+                  _filterBar(),
+                  const SizedBox(height: 12),
+                  if (tasks.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40),
+                      child: Center(
+                          child: Text('No tasks yet. Open the menu to add one.',
+                              style: TextStyle(color: ink))),
+                    )
+                  else if (shown.isEmpty && unavailable.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40),
+                      child: Center(
+                          child: Text(emptyMsg,
+                              style: const TextStyle(color: ink))),
+                    )
+                  else ...[
+                    for (final t in shown)
                       Padding(
                           padding: const EdgeInsets.fromLTRB(16, 0, 22, 20),
                           child: _row(t)),
+                    if (unavailable.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+                        child: Text('NOT TODAY',
+                            style: pixel(16, ink, weight: FontWeight.w700)),
+                      ),
+                      for (final t in unavailable)
+                        Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 22, 20),
+                            child: _row(t)),
+                    ],
                   ],
                 ],
-              ],
+              ),
             ),
-          ),
+          ]),
         ),
         Positioned.fill(
           child: IgnorePointer(

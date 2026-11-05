@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../core/palette.dart';
 
@@ -53,4 +54,45 @@ class _TrianglePainter extends CustomPainter {
       Paint()..color = coral);
   @override
   bool shouldRepaint(covariant CustomPainter o) => false;
+}
+
+/// Two big orange circles with rings, one bleeding in from the top-right corner and one from the
+/// bottom-left, for the home screen background. Their size follows the screen and they never touch.
+class CornerCircles extends StatelessWidget {
+  const CornerCircles({super.key});
+  @override
+  Widget build(BuildContext context) =>
+      const CustomPaint(painter: _CornerCirclesPainter(), size: Size.infinite);
+}
+
+class _CornerCirclesPainter extends CustomPainter {
+  const _CornerCirclesPainter();
+
+  void _circle(Canvas canvas, Offset center, double radius) {
+    canvas.drawCircle(
+        center, radius, Paint()..color = lightOrange.withOpacity(0.5));
+    canvas.drawCircle(
+      center,
+      radius + 20,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 6
+        ..color = lightOrange.withOpacity(0.8),
+    );
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final radius = math.min(size.width * 0.42, size.height * 0.22);
+    final topRight = Offset(size.width * 0.94, size.height * 0.04);
+    final bottomLeft = Offset(size.width * 0.06, size.height * 0.96);
+    // keep the outer rings clear of each other even on unusual screen shapes
+    final gap = (topRight - bottomLeft).distance - 2 * (radius + 23);
+    final r = gap > 0 ? radius : radius + gap / 2 - 8;
+    _circle(canvas, topRight, r);
+    _circle(canvas, bottomLeft, r);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => false;
 }
