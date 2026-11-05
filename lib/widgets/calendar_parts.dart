@@ -14,8 +14,9 @@ class _BackdropPainter extends CustomPainter {
   const _BackdropPainter();
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width * 0.5, size.height * 0.38);
-    final radius = size.width * 0.58;
+    // sized against the whole panel; the circle reaches up behind the header tab
+    final center = Offset(size.width * 0.5, size.height * 0.34);
+    final radius = size.width * 0.6;
     canvas.drawCircle(
         center, radius, Paint()..color = lightOrange.withOpacity(0.6));
     canvas.drawCircle(

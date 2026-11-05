@@ -123,7 +123,6 @@ class _CharacterPickerState extends State<CharacterPicker> {
                                             child: CharacterArt(id,
                                                 key: ValueKey(id),
                                                 main: cocoa,
-                                                shadow: peach,
                                                 contain: true),
                                           ),
                                         ),

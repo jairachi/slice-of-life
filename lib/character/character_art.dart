@@ -80,14 +80,15 @@ Future<_ArtData?> _loadArt(String id) => _artCache.putIfAbsent(id, () async {
 /// With [contain] the whole figure is shrunk to fit inside the box instead, so nothing is cropped.
 class CharacterArt extends StatelessWidget {
   final String id;
-  final Color main, shadow;
+  final Color main;
+  final Color? shadow; // null = no outline/shadow
   final double outline; // thickness of the shadow outline in logical pixels
   final bool alignRight; // true: sit against the right edge and spill leftwards
   final bool contain; // true: fit the whole figure inside the box
   const CharacterArt(this.id,
       {super.key,
       required this.main,
-      required this.shadow,
+      this.shadow,
       this.outline = 7,
       this.alignRight = false,
       this.contain = false});
@@ -113,7 +114,8 @@ class CharacterArt extends StatelessWidget {
 
 class _ArtPainter extends CustomPainter {
   final _ArtData art;
-  final Color main, shadow;
+  final Color main;
+  final Color? shadow;
   final double outline;
   final bool alignRight, contain;
   const _ArtPainter(this.art, this.main, this.shadow, this.outline,
@@ -122,7 +124,8 @@ class _ArtPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final b = art.bounds;
-    final margin = outline + 2; // keeps the outline inside the box when fitting
+    final margin = (shadow == null ? 0.0 : outline) +
+        2; // keeps the outline inside the box when fitting
     final double scale = contain
         ? math.min((size.width - 2 * margin) / b.width,
             (size.height - 2 * margin) / b.height)
@@ -135,16 +138,19 @@ class _ArtPainter extends CustomPainter {
     final dst = Rect.fromLTWH(left, top, dw, dh);
 
     // outline: stamp the shadow-colored copy in a ring of offsets around the figure
-    final shadowPaint = Paint()
-      ..filterQuality = FilterQuality.medium
-      ..colorFilter = ColorFilter.mode(shadow, BlendMode.srcIn);
-    for (var i = 0; i < 16; i++) {
-      final a = i * math.pi / 8;
-      canvas.drawImageRect(
-          art.image,
-          b,
-          dst.shift(Offset(math.cos(a) * outline, math.sin(a) * outline)),
-          shadowPaint);
+    final shadowColor = shadow;
+    if (shadowColor != null) {
+      final shadowPaint = Paint()
+        ..filterQuality = FilterQuality.medium
+        ..colorFilter = ColorFilter.mode(shadowColor, BlendMode.srcIn);
+      for (var i = 0; i < 16; i++) {
+        final a = i * math.pi / 8;
+        canvas.drawImageRect(
+            art.image,
+            b,
+            dst.shift(Offset(math.cos(a) * outline, math.sin(a) * outline)),
+            shadowPaint);
+      }
     }
     final mainPaint = Paint()
       ..filterQuality = FilterQuality.medium

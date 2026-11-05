@@ -173,178 +173,180 @@ class _SlantDatePickerState extends State<SlantDatePicker> {
               clipper: const Para(slant),
               child: Container(
                 color: cream,
-                child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(children: [
-                        Expanded(
-                          child: ClipPath(
-                            clipper: const HeaderClip(),
-                            child: Container(
-                              color: cocoa,
-                              padding: const EdgeInsets.fromLTRB(
-                                  slant + 18, 14, 34, 14),
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text(widget.title,
-                                    style: pixel(22, cream,
-                                        weight: FontWeight.w700)),
+                child: Stack(children: [
+                  const Positioned.fill(child: CalendarBackdrop()),
+                  Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(children: [
+                          Expanded(
+                            child: ClipPath(
+                              clipper: const HeaderClip(),
+                              child: Container(
+                                color: cocoa,
+                                padding: const EdgeInsets.fromLTRB(
+                                    slant + 18, 14, 34, 14),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(widget.title,
+                                      style: pixel(22, cream,
+                                          weight: FontWeight.w700)),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        IconButton(
-                            icon:
-                                const Icon(Icons.close, color: cocoa, size: 28),
-                            onPressed: () => Navigator.pop(context)),
-                      ]),
-                      Flexible(
-                        child: SingleChildScrollView(
-                          child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Stack(clipBehavior: Clip.hardEdge, children: [
-                                  const Positioned.fill(
-                                      child: CalendarBackdrop()),
-                                  Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                        slant + 8, 14, slant + 8, 16),
-                                    child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.stretch,
-                                        children: [
-                                          _monthSlide(
-                                            Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
-                                                children: [
-                                                  _monthArrow(
-                                                      left: true,
-                                                      number: prevMonth,
-                                                      enabled: _canPrev),
-                                                  Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        Text('${month.month}',
-                                                            style: const TextStyle(
-                                                                fontSize: 82,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w900,
-                                                                fontStyle:
-                                                                    FontStyle
-                                                                        .italic,
-                                                                color: cocoa,
-                                                                height: 0.95)),
-                                                        Text(
-                                                            '${_monthNames[month.month - 1]}  ${month.year}',
-                                                            style: pixel(
-                                                                11, cocoa,
-                                                                height: 1.4,
-                                                                weight:
-                                                                    FontWeight
-                                                                        .w700)),
-                                                      ]),
-                                                  _monthArrow(
-                                                      left: false,
-                                                      number: nextMonth,
-                                                      enabled: _canNext),
-                                                ]),
-                                          ),
-                                          const SizedBox(height: 14),
-                                          AnimatedSize(
-                                            duration: const Duration(
-                                                milliseconds: 250),
-                                            curve: Curves.easeInOutCubic,
-                                            alignment: Alignment.topCenter,
-                                            child: _monthSlide(
-                                              Column(
+                          IconButton(
+                              icon: const Icon(Icons.close,
+                                  color: cocoa, size: 28),
+                              onPressed: () => Navigator.pop(context)),
+                        ]),
+                        Flexible(
+                          child: SingleChildScrollView(
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Stack(clipBehavior: Clip.hardEdge, children: [
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                          slant + 8, 14, slant + 8, 16),
+                                      child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.stretch,
+                                          children: [
+                                            _monthSlide(
+                                              Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
                                                   crossAxisAlignment:
-                                                      CrossAxisAlignment
-                                                          .stretch,
+                                                      CrossAxisAlignment.center,
                                                   children: [
-                                                    Row(children: [
-                                                      for (var i = 0;
-                                                          i < 7;
-                                                          i++)
-                                                        Expanded(
-                                                          child: Center(
-                                                            child: Text(
-                                                                _weekdays[i],
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                        12,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w900,
-                                                                    fontStyle:
-                                                                        FontStyle
-                                                                            .italic,
-                                                                    color: i ==
-                                                                            0
-                                                                        ? _sunRed
-                                                                        : (i == 6
-                                                                            ? orange
-                                                                            : cocoa))),
-                                                          ),
-                                                        ),
-                                                    ]),
-                                                    const SizedBox(height: 4),
-                                                    for (var r = 0;
-                                                        r < rows;
-                                                        r++)
-                                                      Row(children: [
-                                                        for (var c = 0;
-                                                            c < 7;
-                                                            c++)
-                                                          Expanded(
-                                                              child: _cell(
-                                                                  r * 7 +
-                                                                      c -
-                                                                      blanks +
-                                                                      1,
-                                                                  c,
-                                                                  daysInMonth)),
-                                                      ]),
+                                                    _monthArrow(
+                                                        left: true,
+                                                        number: prevMonth,
+                                                        enabled: _canPrev),
+                                                    Column(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: [
+                                                          Text('${month.month}',
+                                                              style: const TextStyle(
+                                                                  fontSize: 82,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w900,
+                                                                  fontStyle:
+                                                                      FontStyle
+                                                                          .italic,
+                                                                  color: cocoa,
+                                                                  height:
+                                                                      0.95)),
+                                                          Text(
+                                                              '${_monthNames[month.month - 1]}  ${month.year}',
+                                                              style: pixel(
+                                                                  11, cocoa,
+                                                                  height: 1.4,
+                                                                  weight:
+                                                                      FontWeight
+                                                                          .w700)),
+                                                        ]),
+                                                    _monthArrow(
+                                                        left: false,
+                                                        number: nextMonth,
+                                                        enabled: _canNext),
                                                   ]),
                                             ),
-                                          ),
-                                        ]),
+                                            const SizedBox(height: 14),
+                                            AnimatedSize(
+                                              duration: const Duration(
+                                                  milliseconds: 250),
+                                              curve: Curves.easeInOutCubic,
+                                              alignment: Alignment.topCenter,
+                                              child: _monthSlide(
+                                                Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .stretch,
+                                                    children: [
+                                                      Row(children: [
+                                                        for (var i = 0;
+                                                            i < 7;
+                                                            i++)
+                                                          Expanded(
+                                                            child: Center(
+                                                              child: Text(
+                                                                  _weekdays[i],
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                          12,
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w900,
+                                                                      fontStyle:
+                                                                          FontStyle
+                                                                              .italic,
+                                                                      color: i ==
+                                                                              0
+                                                                          ? _sunRed
+                                                                          : (i == 6
+                                                                              ? orange
+                                                                              : cocoa))),
+                                                            ),
+                                                          ),
+                                                      ]),
+                                                      const SizedBox(height: 4),
+                                                      for (var r = 0;
+                                                          r < rows;
+                                                          r++)
+                                                        Row(children: [
+                                                          for (var c = 0;
+                                                              c < 7;
+                                                              c++)
+                                                            Expanded(
+                                                                child: _cell(
+                                                                    r * 7 +
+                                                                        c -
+                                                                        blanks +
+                                                                        1,
+                                                                    c,
+                                                                    daysInMonth)),
+                                                        ]),
+                                                    ]),
+                                              ),
+                                            ),
+                                          ]),
+                                    ),
+                                  ]),
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                        slant + 22, 6, slant + 22, 24),
+                                    child: Row(children: [
+                                      Expanded(
+                                          child: SlantButton(
+                                              label: 'Cancel',
+                                              color: cocoa,
+                                              textColor: cream,
+                                              shadow: coral,
+                                              onTap: () =>
+                                                  Navigator.pop(context))),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                          child: SlantButton(
+                                              label: 'Select',
+                                              color: coral,
+                                              textColor: cream,
+                                              shadow: cocoa,
+                                              onTap: () => Navigator.pop(
+                                                  context, selected))),
+                                    ]),
                                   ),
                                 ]),
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                      slant + 22, 6, slant + 22, 24),
-                                  child: Row(children: [
-                                    Expanded(
-                                        child: SlantButton(
-                                            label: 'Cancel',
-                                            color: cocoa,
-                                            textColor: cream,
-                                            shadow: coral,
-                                            onTap: () =>
-                                                Navigator.pop(context))),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                        child: SlantButton(
-                                            label: 'Select',
-                                            color: coral,
-                                            textColor: cream,
-                                            shadow: cocoa,
-                                            onTap: () => Navigator.pop(
-                                                context, selected))),
-                                  ]),
-                                ),
-                              ]),
+                          ),
                         ),
-                      ),
-                    ]),
+                      ]),
+                ]),
               ),
             ),
           ]),
