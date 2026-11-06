@@ -12,7 +12,7 @@ Slice of Life turns everyday responsibilities (studying, chores, working out, ne
 Every quest you finish earns XP, XP raises your level, and your character grows with you,
 so progress is something you can actually see.
 
-It is made for students who want to build better habits, especially anyone who loves RPGs and anime,
+It is made for students and young adults who want to build better habits, especially anyone who loves RPGs and anime,
 and would be more motivated if real-world wins counted as progress in a game.
 
 ## Features
