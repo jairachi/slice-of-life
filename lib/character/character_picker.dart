@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/popup_header.dart';
 import '../core/palette.dart';
 import '../core/shapes.dart';
 import '../widgets/slant_widgets.dart';
@@ -18,11 +19,9 @@ class _CharacterPickerState extends State<CharacterPicker> {
     for (final g in characterGroups.values)
       for (var n = 1; n <= 3; n++) '${g}_$n',
   ];
-  late int index =
-      _ids.contains(widget.current) ? _ids.indexOf(widget.current) : 0;
+  late int index = _ids.contains(widget.current) ? _ids.indexOf(widget.current) : 0;
 
-  int _dir =
-      1; // 1 = moving right (new figure enters from the right), -1 = left
+  int _dir = 1; // 1 = moving right (new figure enters from the right), -1 = left
 
   void _move(int d) => setState(() {
         _dir = d;
@@ -40,138 +39,70 @@ class _CharacterPickerState extends State<CharacterPicker> {
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Padding(
         padding: const EdgeInsets.only(right: 8, bottom: 8),
-        child: SizedBox(
+        child: HeaderPanel(title: 'CHOOSE YOUR PERSONA', titleSize: 20, headerColor: coral, shadowColor: cocoa, onClose: () => Navigator.pop(context), panel: SizedBox(
           width: double.infinity,
           child: Stack(children: [
             Positioned.fill(
-              child: Transform.translate(
-                  offset: const Offset(8, 8),
-                  child: ClipPath(
-                      clipper: const Para(slant),
-                      child: const ColoredBox(color: cocoa))),
+              child: Transform.translate(offset: const Offset(8, 8), child: ClipPath(clipper: const Para(slant), child: const ColoredBox(color: cocoa))),
             ),
             ClipPath(
               clipper: const Para(slant),
               child: Container(
                 color: cream,
-                child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(children: [
+                child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    const SizedBox(height: kHeaderSpace),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(slant + 10, 20, slant + 10, 6),
+                      child: Row(children: [
+                        ArrowBtn(icon: Icons.chevron_left, onTap: () => _move(-1)),
                         Expanded(
-                          child: ClipPath(
-                            clipper: const HeaderClip(),
-                            child: Container(
-                              color: coral,
-                              padding: const EdgeInsets.fromLTRB(
-                                  slant + 18, 14, 34, 14),
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: Text('CHOOSE YOUR PERSONA',
-                                    style: pixel(20, cream,
-                                        weight: FontWeight.w700)),
+                          child: SizedBox(
+                            height: 260,
+                            child: ClipRect(
+                              child: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 350),
+                                switchInCurve: Curves.easeOutCubic,
+                                switchOutCurve: Curves.easeInCubic,
+                                // new figure slides in from the arrow's side while the old one slides out the other way
+                                transitionBuilder: (child, anim) {
+                                  final incoming = child.key == ValueKey(id);
+                                  final from = incoming ? _dir.toDouble() : -_dir.toDouble();
+                                  return SlideTransition(
+                                    position: Tween<Offset>(begin: Offset(from, 0), end: Offset.zero).animate(anim),
+                                    child: FadeTransition(opacity: anim, child: child),
+                                  );
+                                },
+                                child: CharacterArt(id, key: ValueKey(id), main: cocoa, contain: true),
                               ),
                             ),
                           ),
                         ),
-                        IconButton(
-                            icon:
-                                const Icon(Icons.close, color: cocoa, size: 28),
-                            onPressed: () => Navigator.pop(context)),
+                        ArrowBtn(icon: Icons.chevron_right, onTap: () => _move(1)),
                       ]),
-                      Flexible(
-                        child: SingleChildScrollView(
-                          child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                      slant + 10, 20, slant + 10, 6),
-                                  child: Row(children: [
-                                    ArrowBtn(
-                                        icon: Icons.chevron_left,
-                                        onTap: () => _move(-1)),
-                                    Expanded(
-                                      child: SizedBox(
-                                        height: 260,
-                                        child: ClipRect(
-                                          child: AnimatedSwitcher(
-                                            duration: const Duration(
-                                                milliseconds: 350),
-                                            switchInCurve: Curves.easeOutCubic,
-                                            switchOutCurve: Curves.easeInCubic,
-                                            // new figure slides in from the arrow's side while the old one slides out the other way
-                                            transitionBuilder: (child, anim) {
-                                              final incoming =
-                                                  child.key == ValueKey(id);
-                                              final from = incoming
-                                                  ? _dir.toDouble()
-                                                  : -_dir.toDouble();
-                                              return SlideTransition(
-                                                position: Tween<Offset>(
-                                                        begin: Offset(from, 0),
-                                                        end: Offset.zero)
-                                                    .animate(anim),
-                                                child: FadeTransition(
-                                                    opacity: anim,
-                                                    child: child),
-                                              );
-                                            },
-                                            child: CharacterArt(id,
-                                                key: ValueKey(id),
-                                                main: cocoa,
-                                                contain: true),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    ArrowBtn(
-                                        icon: Icons.chevron_right,
-                                        onTap: () => _move(1)),
-                                  ]),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: Center(
-                                      child: Text(
-                                          'Option ${index + 1} of ${_ids.length}',
-                                          style:
-                                              pixel(14, cocoa, height: 1.3))),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                      slant + 22, 22, slant + 22, 24),
-                                  child: Row(children: [
-                                    Expanded(
-                                        child: SlantButton(
-                                            label: 'Cancel',
-                                            color: cocoa,
-                                            textColor: cream,
-                                            shadow: coral,
-                                            onTap: () =>
-                                                Navigator.pop(context))),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                        child: SlantButton(
-                                            label: 'Select',
-                                            color: coral,
-                                            textColor: cream,
-                                            shadow: cocoa,
-                                            onTap: () =>
-                                                Navigator.pop(context, id))),
-                                  ]),
-                                ),
-                              ]),
-                        ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Center(child: Text('Option ${index + 1} of ${_ids.length}', style: pixel(14, cocoa, height: 1.3))),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(slant + 22, 22, slant + 22, 24),
+                      child: Row(children: [
+                        Expanded(child: SlantButton(label: 'Cancel', color: cocoa, textColor: cream, shadow: coral, onTap: () => Navigator.pop(context))),
+                        const SizedBox(width: 16),
+                        Expanded(child: SlantButton(label: 'Select', color: coral, textColor: cream, shadow: cocoa, onTap: () => Navigator.pop(context, id))),
+                      ]),
+                    ),
+                        ]),
                       ),
-                    ]),
+                    ),
+                  ]),
               ),
             ),
           ]),
-        ),
+        )),
       ),
     );
   }

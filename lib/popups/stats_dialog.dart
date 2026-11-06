@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../widgets/popup_header.dart';
 import '../core/palette.dart';
 import '../core/shapes.dart';
 import '../models/leveling.dart';
@@ -59,7 +60,7 @@ class StatsDialog extends StatelessWidget {
       insetPadding: EdgeInsets.symmetric(horizontal: screen.width * 0.05, vertical: 24),
       child: Padding(
         padding: const EdgeInsets.only(right: 8, bottom: 8),
-        child: SizedBox(
+        child: HeaderPanel(title: 'STATS', titleSize: 26, headerColor: cocoa, shadowColor: coral, onClose: () => Navigator.pop(context), panel: SizedBox(
           width: double.infinity,
           child: Stack(children: [
             Positioned.fill(
@@ -70,19 +71,7 @@ class StatsDialog extends StatelessWidget {
               child: Container(
                 color: salmon,
                 child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                    Row(children: [
-                      Expanded(
-                        child: ClipPath(
-                          clipper: const HeaderClip(),
-                          child: Container(
-                            color: cocoa,
-                            padding: const EdgeInsets.fromLTRB(slant + 18, 14, 34, 14),
-                            child: Text('STATS', style: pixel(26, cream, weight: FontWeight.w700)),
-                          ),
-                        ),
-                      ),
-                      IconButton(icon: const Icon(Icons.close, color: cocoa, size: 28), onPressed: () => Navigator.pop(context)),
-                    ]),
+                    const SizedBox(height: kHeaderSpace),
                     Flexible(
                       child: SingleChildScrollView(
                         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -136,7 +125,7 @@ class StatsDialog extends StatelessWidget {
               ),
             ),
           ]),
-        ),
+        )),
       ),
     );
   }

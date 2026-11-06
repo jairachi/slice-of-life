@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/popup_header.dart';
 import '../core/palette.dart';
 import '../core/shapes.dart';
 import '../models/history.dart';
@@ -193,7 +194,7 @@ class _CalendarDialogState extends State<CalendarDialog> {
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Padding(
         padding: const EdgeInsets.only(right: 8, bottom: 8),
-        child: SizedBox(
+        child: HeaderPanel(title: 'CALENDAR', titleSize: 24, headerColor: cocoa, shadowColor: coral, onClose: () => Navigator.pop(context), panel: SizedBox(
           width: double.infinity,
           child: Stack(children: [
             Positioned.fill(
@@ -211,19 +212,7 @@ class _CalendarDialogState extends State<CalendarDialog> {
                     onTap: selected == null ? null : _back, // same as the panel's down arrow
                     child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   // sticky header
-                  Row(children: [
-                    Expanded(
-                      child: ClipPath(
-                        clipper: const HeaderClip(),
-                        child: Container(
-                          color: cocoa,
-                          padding: const EdgeInsets.fromLTRB(slant + 18, 14, 34, 14),
-                          child: Text('CALENDAR', style: pixel(24, cream, weight: FontWeight.w700)),
-                        ),
-                      ),
-                    ),
-                    IconButton(icon: const Icon(Icons.close, color: cocoa, size: 28), onPressed: () => Navigator.pop(context)),
-                  ]),
+                  const SizedBox(height: kHeaderSpace),
                   Flexible(
                     child: SingleChildScrollView(
                       child: Stack(clipBehavior: Clip.hardEdge, children: [
@@ -289,7 +278,7 @@ class _CalendarDialogState extends State<CalendarDialog> {
               ),
             ),
           ]),
-        ),
+        )),
       ),
     ));
   }
