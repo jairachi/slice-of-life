@@ -3,6 +3,7 @@ import '../character/character_art.dart';
 import '../core/palette.dart';
 import '../core/shapes.dart';
 import '../popups/time_picker_dialog.dart';
+import '../services/notification_service.dart';
 import '../widgets/slant_widgets.dart';
 
 /// Settings page: name, persona and reminders (moved here from the dock menu).
@@ -63,7 +64,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final on = widget.getRemindersOn();
+    final canRemind = NotificationService.supported; // false in the web version
+    final on = canRemind && widget.getRemindersOn();
     final time = widget.getRemindTime();
     return Scaffold(
       body: Container(
@@ -135,7 +137,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 fontStyle: FontStyle.italic))),
                     Switch(
                         value: on,
-                        onChanged: _toggleReminders,
+                        onChanged: canRemind ? _toggleReminders : null,
                         activeColor: cream,
                         activeTrackColor: coral,
                         inactiveThumbColor: peach,
@@ -150,13 +152,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         label: 'Change',
                         selected: true,
                         pad: 14,
-                        onTap: _pickTime),
+                        onTap: canRemind ? _pickTime : () {}),
                   ),
                   const SizedBox(height: 14),
                   const Text(
                       'A daily check-in at this time, plus a reminder on the target date of any unfinished task that has one.',
                       style:
                           TextStyle(color: peach, fontSize: 14, height: 1.4)),
+                  if (!canRemind)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 12),
+                      child: Text(
+                          'Reminders only work in the Android app. This web version cannot send notifications.',
+                          style: TextStyle(
+                              color: sun,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800)),
+                    ),
                   if (note != null)
                     Padding(
                       padding: const EdgeInsets.only(top: 12),

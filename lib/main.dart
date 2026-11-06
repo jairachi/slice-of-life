@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+import 'dart:ui' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'core/palette.dart';
 import 'screens/home_screen.dart';
@@ -15,6 +17,30 @@ class SolApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
         title: 'Slice of Life',
         debugShowCheckedModeBanner: false,
+        // lets a mouse drag-scroll lists too (the web version on a desktop browser)
+        scrollBehavior: const MaterialScrollBehavior().copyWith(
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.mouse,
+            PointerDeviceKind.trackpad,
+            PointerDeviceKind.stylus
+          },
+        ),
+        // on wide screens (desktop browsers) keep the app a phone-sized column in the middle
+        builder: (context, child) {
+          final mq = MediaQuery.of(context);
+          final w = math.min(mq.size.width, 520.0);
+          return ColoredBox(
+            color: cocoa,
+            child: Center(
+              child: SizedBox(
+                  width: w,
+                  child: MediaQuery(
+                      data: mq.copyWith(size: Size(w, mq.size.height)),
+                      child: child!)),
+            ),
+          );
+        },
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(

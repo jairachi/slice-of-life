@@ -31,6 +31,9 @@ class NotificationService {
     iOS: DarwinNotificationDetails(),
   );
 
+  /// False on web/desktop: reminders only exist in the Android/iOS apps.
+  static bool get supported => _supported;
+
   static bool get _supported =>
       !kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.android ||

@@ -73,6 +73,10 @@ and would be more motivated if real-world wins counted as progress in a game.
 and allow installs from unknown sources if asked. (Releases are published by the author; if there is no release yet,
 build it yourself below.)
 
+**Web app (works on Mac, Windows and iPhone/Android browsers):** https://<your-username>.github.io/<your-repo>/
+
+On iPhone: open it in Safari, tap Share, then "Add to Home Screen". Reminders and vibration feedback are only in the Android app.
+
 ## Built with
 
 Flutter and Dart, SQLite (`sqflite`) for quests and history, `shared_preferences` for small settings,
