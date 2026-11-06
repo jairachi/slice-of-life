@@ -5,24 +5,19 @@
   Built with Flutter for Android, with a Persona 3 Reload inspired look.
 </p>
 
-<!--
-  Add screenshots to docs/screenshots/ and uncomment this block (see "Screenshots" below):
-
--->
-
-## Why Slice of Life?
+## Why _Slice of Life_?
 
 Most to-do lists tell you _what_ to do, but they never make you feel like you are getting anywhere.
 Slice of Life turns everyday responsibilities (studying, chores, working out, new hobbies) into quests.
-Every quest you finish earns XP, XP raises your level, and the persona you picked grows with you,
+Every quest you finish earns XP, XP raises your level, and your character grows with you,
 so progress is something you can actually see.
 
-It is made for students who want to build better habits, especially anyone who loves RPGs and anime
+It is made for students who want to build better habits, especially anyone who loves RPGs and anime,
 and would be more motivated if real-world wins counted as progress in a game.
 
 ## Features
 
-**Quests**
+**Tasks**
 
 - Create tasks with a name, description, category and XP reward (10, 25, 50, 75 or your own amount).
 - Add an optional target date from a calendar.
@@ -30,15 +25,15 @@ and would be more motivated if real-world wins counted as progress in a game.
 
 **Progress**
 
-- Earn XP for every quest, with a satisfying "+XP" pop, haptic feedback and an animated XP bar.
+- Earn XP for every quest, with a satisfying "+XP" pop, haptic feedback and an animated experience bar.
 - Level up with a full-screen level-up popup. Level N needs N x 100 XP to reach the next level.
-- Pick your persona from nine silhouettes (male, female or ambiguous) with a Stardew-style selector.
+- Pick your character from nine silhouettes (male, female or ambiguous) with a Stardew Valley-style selector.
 
 **Habits**
 
 - Recurring quests: every day or on specific weekdays. They reset on their own, so you never recreate them.
 - Streaks: finish a recurring quest on each scheduled day to keep your flame alive.
-- Reminders: a daily check-in plus a notification on the target date of any unfinished quest, at a time you choose.
+- Reminders: a daily check-in plus a notification on the target date of any unfinished quest, at a time you choose. (Only available on the Android app version)
 
 **Look back**
 
@@ -70,12 +65,12 @@ and would be more motivated if real-world wins counted as progress in a game.
 ## Get or try the app
 
 **Android:** download the latest `.apk` from the [Releases](../../releases) page, open it on your phone
-and allow installs from unknown sources if asked. (Releases are published by the author; if there is no release yet,
-build it yourself below.)
+and allow installs from unknown sources if asked.
 
-**Web app (works on Mac, Windows and iPhone/Android browsers):** https://<your-username>.github.io/<your-repo>/
+**Web app (works on Mac, Windows and iPhone/Android browsers):** You can use Slice of Life on the web with this [link](https://jairachi.github.io/slice-of-life/). 
+_Note that vibration and notifications are only available for Android app users._
 
-On iPhone: open it in Safari, tap Share, then "Add to Home Screen". Reminders and vibration feedback are only in the Android app.
+On iPhone: open it in Safari, tap Share, then "Add to Home Screen".
 
 ## Built with
 
@@ -101,7 +96,7 @@ assets/                fonts, persona silhouettes, app icon source
 
 ## Roadmap
 
-Ideas that fit the app and are not built yet:
+Ideas that fit the app but are not built yet:
 
 - Archive or clear old completed quests
 - Streak milestone celebrations
@@ -114,7 +109,7 @@ Technologies_. The idea, requirements document and design direction are by **Mic
 built by him with the help of AI tools, as the course asked.
 
 The visual style is inspired by _Persona 3 Reload_. This is a fan-inspired, non-commercial project. It is not
-affiliated with or endorsed by Atlus or SEGA, and it uses no assets from the games. The pixel font is
+affiliated with or endorsed by Atlus or SEGA, and it uses no assets from the games. The pixel font used is
 [Silkscreen](https://fonts.google.com/specimen/Silkscreen) by Jason Kottke.
 
 ## License
