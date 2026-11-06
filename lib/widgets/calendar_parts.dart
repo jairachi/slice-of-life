@@ -61,8 +61,11 @@ class _TrianglePainter extends CustomPainter {
 class CornerCircles extends StatelessWidget {
   const CornerCircles({super.key});
   @override
-  Widget build(BuildContext context) =>
-      const CustomPaint(painter: _CornerCirclesPainter(), size: Size.infinite);
+  // ClipRect: a CustomPaint draws outside its own box by default, which showed the circles
+  // outside the phone-width column of the web version
+  Widget build(BuildContext context) => const ClipRect(
+      child:
+          CustomPaint(painter: _CornerCirclesPainter(), size: Size.infinite));
 }
 
 class _CornerCirclesPainter extends CustomPainter {

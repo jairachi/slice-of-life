@@ -18,6 +18,7 @@ import '../popups/option_picker.dart';
 import '../popups/stats_dialog.dart';
 import '../services/notification_service.dart';
 import '../widgets/calendar_parts.dart';
+import '../widgets/menu_rings.dart';
 import '../widgets/slant_widgets.dart';
 import '../widgets/xp_gain_pill.dart';
 import 'editor_screen.dart';
@@ -664,21 +665,36 @@ class _HomeScreenState extends State<HomeScreen>
           ),
       ]),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+      floatingActionButton: Stack(
+        alignment: Alignment.bottomLeft,
+        clipBehavior: Clip.none,
         children: [
-          IgnorePointer(ignoring: !menuOpen, child: _dock()),
-          _circleBtn(
-            color: coral,
-            shadow: cocoa,
-            border: cocoa,
-            onTap: () => _setMenu(!menuOpen),
-            icon: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
-              child: Icon(menuOpen ? Icons.close : Icons.menu,
-                  key: ValueKey(menuOpen), color: cream, size: 26),
-            ),
+          // rings that grow out of the menu button when it opens and shrink back when it closes
+          Positioned(
+            left: 0,
+            bottom: 0,
+            width: 60,
+            height: 60,
+            child: IgnorePointer(
+                child: CustomPaint(painter: MenuRingsPainter(_menuCtl))),
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              IgnorePointer(ignoring: !menuOpen, child: _dock()),
+              _circleBtn(
+                color: coral,
+                shadow: cocoa,
+                border: cocoa,
+                onTap: () => _setMenu(!menuOpen),
+                icon: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  child: Icon(menuOpen ? Icons.close : Icons.menu,
+                      key: ValueKey(menuOpen), color: cream, size: 26),
+                ),
+              ),
+            ],
           ),
         ],
       ),

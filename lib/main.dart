@@ -33,11 +33,13 @@ class SolApp extends StatelessWidget {
           return ColoredBox(
             color: cocoa,
             child: Center(
+              // ClipRect: anything drawn past the column edge (rings, circles) stays out of the side margins
               child: SizedBox(
                   width: w,
-                  child: MediaQuery(
-                      data: mq.copyWith(size: Size(w, mq.size.height)),
-                      child: child!)),
+                  child: ClipRect(
+                      child: MediaQuery(
+                          data: mq.copyWith(size: Size(w, mq.size.height)),
+                          child: child!))),
             ),
           );
         },
