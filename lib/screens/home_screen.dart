@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -161,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen>
       elevation: 0,
       padding: EdgeInsets.zero,
       behavior: SnackBarBehavior.floating,
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 96),
       duration: const Duration(seconds: 2),
       content: Padding(
         padding: const EdgeInsets.only(right: 6, bottom: 6),
@@ -440,90 +441,172 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       );
 
-  /// One speed-dial option: inverted circle button + slanted label with offset shadow.
-  Widget _dockItem(IconData icon, String label, VoidCallback onTap) {
-    void go() {
-      _closeMenu();
-      onTap();
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        _circleBtn(
-            icon: Icon(icon, color: coral, size: 26),
-            color: cream,
-            shadow: coral,
-            border: coral,
-            onTap: go),
-        const SizedBox(width: 14),
-        GestureDetector(
-          onTap: go,
-          child: Padding(
-            padding: const EdgeInsets.only(right: 6, bottom: 6),
-            child: Stack(children: [
-              Positioned.fill(
-                child: Transform.translate(
-                    offset: const Offset(5, 5),
-                    child: ClipPath(
-                        clipper: const Para(10),
-                        child: const ColoredBox(color: coral))),
+  /// Slanted label that sits next to a menu button.
+  Widget _dockLabel(String label, VoidCallback go) => GestureDetector(
+        onTap: go,
+        child: Padding(
+          padding: const EdgeInsets.only(right: 6, bottom: 6),
+          child: Stack(children: [
+            Positioned.fill(
+              child: Transform.translate(
+                  offset: const Offset(5, 5),
+                  child: ClipPath(
+                      clipper: const Para(10),
+                      child: const ColoredBox(color: coral))),
+            ),
+            ClipPath(
+              clipper: const Para(10),
+              child: Container(
+                color: cream,
+                padding: const EdgeInsets.fromLTRB(24, 10, 22, 10),
+                child: Text(label.toUpperCase(),
+                    style: const TextStyle(
+                        color: coral,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        fontStyle: FontStyle.italic,
+                        letterSpacing: 1)),
               ),
-              ClipPath(
-                clipper: const Para(10),
-                child: Container(
-                  color: cream,
-                  padding: const EdgeInsets.fromLTRB(24, 10, 22, 10),
-                  child: Text(label.toUpperCase(),
-                      style: const TextStyle(
-                          color: coral,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                          fontStyle: FontStyle.italic,
-                          letterSpacing: 1)),
-                ),
-              ),
-            ]),
-          ),
+            ),
+          ]),
         ),
-      ]),
-    );
-  }
+      );
 
-  /// Menu options stacked above the ☰ button. Each option travels between the button and
-  /// its slot (with fade + scale) on the same controller, so open and close mirror each other.
-  Widget _dock() {
+  /// Radius of the ring the menu buttons sit on (the middle ring of [MenuRingsPainter]).
+  static const double _menuRadius = 132;
+
+  /// Everything of the menu, placed in the screen-wide stack (so every part can be tapped):
+  /// rings, the options fanned out along the middle ring, and the round menu button on top.
+  /// Each option flies out of the button when the menu opens and back into it when it closes,
+  /// driven by the same controller as the rings.
+  List<Widget> _menuLayer(double bottomPad) {
     final List<(IconData, String, VoidCallback)> items = [
       (Icons.add, 'New task', () => _edit()),
       (Icons.calendar_month, 'Calendar', _showCalendar),
       (Icons.bar_chart, 'Stats', _showStats),
       (Icons.settings, 'Settings', _openSettings),
     ];
-    return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (var i = 0; i < items.length; i++)
-            AnimatedBuilder(
-              animation: _menuCtl,
-              child: _dockItem(items[i].$1, items[i].$2, items[i].$3),
-              builder: (_, child) {
-                final v = Curves.easeInOutCubic.transform(_menuCtl.value);
-                final dist = (items.length - i) *
-                    74.0; // distance back down to the ☰ button
-                return Opacity(
-                  opacity: v,
-                  child: Transform.translate(
-                    offset: Offset(0, (1 - v) * dist),
-                    child: Transform.scale(
-                        alignment: Alignment.centerLeft,
-                        scale: 0.7 + 0.3 * v,
-                        child: child),
+    const angles = [
+      90.0,
+      60.0,
+      30.0,
+      0.0
+    ]; // degrees up from the horizontal, along the arc
+    const centerX = 16 + 28.0; // centre of the round button, from the left edge
+    final centerB = 16 +
+        bottomPad +
+        32.0; // ...and from the bottom edge (button box is 60 high)
+
+    // options leave the button one after another
+    double progress(int i) {
+      final delay = i * 0.08;
+      return Curves.easeOutCubic
+          .transform(((_menuCtl.value - delay) / (1 - delay)).clamp(0.0, 1.0));
+    }
+
+    // centre of option i's circle (from the left edge, from the bottom edge) at progress t
+    Offset center(int i, double t) {
+      final a = angles[i] * math.pi / 180;
+      return Offset(centerX + _menuRadius * math.cos(a) * t,
+          centerB + _menuRadius * math.sin(a) * t);
+    }
+
+    void go(int i) {
+      _closeMenu();
+      items[i].$3();
+    }
+
+    return [
+      // rings around the button
+      Positioned(
+        left: 16,
+        bottom: 16 + bottomPad,
+        width: 60,
+        height: 60,
+        child: IgnorePointer(
+            child: CustomPaint(painter: MenuRingsPainter(_menuCtl))),
+      ),
+      // options on the arc: each is a round button plus a label at the button's top-right
+      for (var i = 0; i < items.length; i++) ...[
+        AnimatedBuilder(
+          animation: _menuCtl,
+          builder: (ctx, _) {
+            final t = progress(i);
+            final c = center(i, t);
+            return Positioned(
+              left: c.dx - 28,
+              bottom: c.dy - 32,
+              child: IgnorePointer(
+                ignoring: !menuOpen || t < 0.7,
+                child: Opacity(
+                  opacity: t,
+                  child: Transform.scale(
+                    scale: 0.5 + 0.5 * t,
+                    child: _circleBtn(
+                        icon: Icon(items[i].$1, color: coral, size: 26),
+                        color: cream,
+                        shadow: coral,
+                        border: coral,
+                        onTap: () => go(i)),
                   ),
-                );
-              },
-            ),
-        ]);
+                ),
+              ),
+            );
+          },
+        ),
+        AnimatedBuilder(
+          animation: _menuCtl,
+          builder: (ctx, _) {
+            final t = progress(i);
+            final c = center(i, t);
+            // the label's lower-left corner touches the circle's top-right edge point
+            // (the point at 45 degrees up-right of the centre, 28 * cos(45deg) = 19.8 away)
+            final left = c.dx + 19.8;
+            final maxWidth =
+                math.max(60.0, MediaQuery.of(ctx).size.width - left - 8);
+            return Positioned(
+              left: left,
+              bottom: c.dy +
+                  19.8 -
+                  6, // -6: the label's own shadow padding sits below its face
+              child: IgnorePointer(
+                ignoring: !menuOpen || t < 0.7,
+                child: Opacity(
+                  opacity: t,
+                  child: Transform.scale(
+                    alignment: Alignment.bottomLeft,
+                    scale: 0.5 + 0.5 * t,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: maxWidth),
+                      child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.bottomLeft,
+                          child: _dockLabel(items[i].$2, () => go(i))),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+      // the menu button itself
+      Positioned(
+        left: 16,
+        bottom: 16 + bottomPad,
+        child: _circleBtn(
+          color: coral,
+          shadow: cocoa,
+          border: cocoa,
+          onTap: () => _setMenu(!menuOpen),
+          icon: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            child: Icon(menuOpen ? Icons.close : Icons.menu,
+                key: ValueKey(menuOpen), color: cream, size: 26),
+          ),
+        ),
+      ),
+    ];
   }
 
   @override
@@ -663,41 +746,8 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
           ),
+        ..._menuLayer(MediaQuery.of(context).padding.bottom),
       ]),
-      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-      floatingActionButton: Stack(
-        alignment: Alignment.bottomLeft,
-        clipBehavior: Clip.none,
-        children: [
-          // rings that grow out of the menu button when it opens and shrink back when it closes
-          Positioned(
-            left: 0,
-            bottom: 0,
-            width: 60,
-            height: 60,
-            child: IgnorePointer(
-                child: CustomPaint(painter: MenuRingsPainter(_menuCtl))),
-          ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              IgnorePointer(ignoring: !menuOpen, child: _dock()),
-              _circleBtn(
-                color: coral,
-                shadow: cocoa,
-                border: cocoa,
-                onTap: () => _setMenu(!menuOpen),
-                icon: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  child: Icon(menuOpen ? Icons.close : Icons.menu,
-                      key: ValueKey(menuOpen), color: cream, size: 26),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 

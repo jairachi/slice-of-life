@@ -10,9 +10,9 @@ class MenuRingsPainter extends CustomPainter {
 
   // final radius, colour and thickness of each ring (the button's radius is 28)
   static const _rings = [
-    (radius: 76.0, color: coral, width: 12.0),
-    (radius: 118.0, color: lightOrange, width: 10.5),
-    (radius: 164.0, color: cream, width: 9.0),
+    (radius: 78.0, color: coral, width: 12.0),
+    (radius: 132.0, color: lightOrange, width: 10.5),
+    (radius: 198.0, color: cream, width: 9.0),
   ];
 
   @override
