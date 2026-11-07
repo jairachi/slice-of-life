@@ -475,6 +475,9 @@ class _HomeScreenState extends State<HomeScreen>
   /// Radius of the ring the menu buttons sit on (the middle ring of [MenuRingsPainter]).
   static const double _menuRadius = 132;
 
+  /// Radius of the outer ring, where the option labels sit.
+  static const double _labelRadius = 190;
+
   /// Everything of the menu, placed in the screen-wide stack (so every part can be tapped):
   /// rings, the options fanned out along the middle ring, and the round menu button on top.
   /// Each option flies out of the button when the menu opens and back into it when it closes,
@@ -526,7 +529,7 @@ class _HomeScreenState extends State<HomeScreen>
         child: IgnorePointer(
             child: CustomPaint(painter: MenuRingsPainter(_menuCtl))),
       ),
-      // options on the arc: each is a round button plus a label at the button's top-right
+      // options on the arc: each is a round button (middle ring) plus a label (outer ring)
       for (var i = 0; i < items.length; i++) ...[
         AnimatedBuilder(
           animation: _menuCtl,
@@ -558,29 +561,37 @@ class _HomeScreenState extends State<HomeScreen>
           animation: _menuCtl,
           builder: (ctx, _) {
             final t = progress(i);
-            final c = center(i, t);
-            // the label's lower-left corner touches the circle's top-right edge point
-            // (the point at 45 degrees up-right of the centre, 28 * cos(45deg) = 19.8 away)
-            final left = c.dx + 19.8;
+            final a = angles[i] * math.pi / 180;
+            // labels sit out on the outer ring (beyond the buttons), so they never overlap
+            // each other or the neighbouring buttons; they travel outwards with their button
+            final ax = centerX + _labelRadius * math.cos(a) * t;
+            final ab = centerB + _labelRadius * math.sin(a) * t;
+            final top = angles[i] >=
+                80; // the straight-up option sits on top of the ring
+            final left = top
+                ? ax - 28
+                : ax; // top one lines up with its button's left edge
+            final bottom = top
+                ? ab - 6
+                : ab - 26; // -6 / -26: label shadow padding / half its height
             final maxWidth =
                 math.max(60.0, MediaQuery.of(ctx).size.width - left - 8);
+            final origin = top ? Alignment.bottomLeft : Alignment.centerLeft;
             return Positioned(
               left: left,
-              bottom: c.dy +
-                  19.8 -
-                  6, // -6: the label's own shadow padding sits below its face
+              bottom: bottom,
               child: IgnorePointer(
                 ignoring: !menuOpen || t < 0.7,
                 child: Opacity(
                   opacity: t,
                   child: Transform.scale(
-                    alignment: Alignment.bottomLeft,
+                    alignment: origin,
                     scale: 0.5 + 0.5 * t,
                     child: ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: maxWidth),
                       child: FittedBox(
                           fit: BoxFit.scaleDown,
-                          alignment: Alignment.bottomLeft,
+                          alignment: origin,
                           child: _dockLabel(items[i].$2, () => go(i))),
                     ),
                   ),
